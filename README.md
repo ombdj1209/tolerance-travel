@@ -17,6 +17,20 @@ All inventory, prices and tasks are synthetic. The committed results use a **det
 - **Reproducible:** one command regenerates `results/results.json` and `results/report.html` in 137 s on one CPU core. 23 tests run without network access or an API key.
 - **Stack:** Python 3.11+, NumPy, scikit-learn (TF-IDF for the simulated agent), httpx (for the LLM adapter), pytest.
 
+## Tech stack
+
+| Layer | Technology | Used for |
+|---|---|---|
+| Language | Python 3.11+ | Everything; dataclasses for hotels, tasks, traces and the tool server |
+| Numerics | NumPy | Seeded synthetic catalogue and prices, latency percentiles, aggregation |
+| Text retrieval | scikit-learn `TfidfVectorizer`, `cosine_similarity` | How the simulated `spec_agent` picks tools and maps arguments from spec text |
+| LLM integration | Anthropic Messages API (tool use) over httpx | Optional `LLMAgent` in `tolerance_travel/llm_agent.py`, key read from `ANTHROPIC_API_KEY` |
+| Tool server | Pure Python (`toolserver.py`) | Enforces the published and mutated tool contracts: names, parameters, formats, units |
+| Reporting | Python `html`, `json` | `results/results.json` and a self-contained `results/report.html` |
+| Testing | pytest, `httpx.MockTransport` | 23 tests; the LLM loop is tested offline by replaying mocked API responses |
+| Packaging | setuptools, `pyproject.toml`, Make | Editable install with a `dev` extra; `make test`, `make eval`, `make quick` |
+| CI and supply chain | GitHub Actions, Dependabot | Tests on Python 3.11, 3.12 and 3.13; weekly dependency and action updates |
+
 ## Why this exists
 
 Booking.com has described its framework for evaluating the LLM agents behind its AI Trip Planner. It judges task completion from the outside, inspects reasoning and tool use from the inside, weighs agents against simpler baselines on cost and latency, and systematically tests how reliable tool specifications are. tolerance-travel builds those four ideas into one runnable harness and asks the question behind them: **when is an agent worth its cost over a well-built deterministic system, and what happens to both when the tool API changes?**
